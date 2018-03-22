@@ -19,6 +19,8 @@
 #include "common/Messages.h"
 #include "libUtils/Logger.h"
 
+#include <memory>
+
 using namespace std;
 
 bool ConsensusUser::ProcessSetLeader(const vector<unsigned char> & message, unsigned int offset, const Peer & from)
@@ -81,10 +83,8 @@ bool ConsensusUser::ProcessSetLeader(const vector<unsigned char> & message, unsi
 
     if (m_leaderOrBackup == false) // Leader
     {
-        m_consensus.reset
+        m_consensus = std::make_shared<ConsensusLeader>
         (
-            new ConsensusLeader
-            (
                 dummy_consensus_id,
                 dummy_block_hash,
                 my_id,
@@ -93,10 +93,9 @@ bool ConsensusUser::ProcessSetLeader(const vector<unsigned char> & message, unsi
                 peer_info,
                 static_cast<unsigned char>(MessageType::CONSENSUSUSER),
                 static_cast<unsigned char>(InstructionType::CONSENSUS),
-                std::function<bool(const vector<unsigned char> & errorMsg, unsigned int, 
+                std::function<bool(const vector<unsigned char> & errorMsg, unsigned int,
                                    const Peer & from)>(),
                 std::function<bool(map<unsigned int, vector<unsigned char>>)>()
-            )
         );
     }
     else // Backup
@@ -105,10 +104,8 @@ bool ConsensusUser::ProcessSetLeader(const vector<unsigned char> & message, unsi
                            vector<unsigned char> & errorMsg) mutable ->
                            bool { return MyMsgValidatorFunc(message, errorMsg); };
 
-        m_consensus.reset
+        m_consensus = std::make_shared<ConsensusBackup>
         (
-            new ConsensusBackup
-            (
                 dummy_consensus_id,
                 dummy_block_hash,
                 my_id,
@@ -119,7 +116,6 @@ bool ConsensusUser::ProcessSetLeader(const vector<unsigned char> & message, unsi
                 static_cast<unsigned char>(MessageType::CONSENSUSUSER),
                 static_cast<unsigned char>(InstructionType::CONSENSUS),
                 func
-            )
         );
     }
 

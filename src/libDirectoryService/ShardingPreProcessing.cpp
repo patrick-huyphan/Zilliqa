@@ -15,6 +15,7 @@
 **/
 
 #include <algorithm>
+#include <memory>
 #include <thread>
 #include <chrono>
 
@@ -147,10 +148,8 @@ bool DirectoryService::RunConsensusOnShardingWhenDSPrimary()
     m_consensusBlockHash.resize(BLOCK_HASH_SIZE);
     fill(m_consensusBlockHash.begin(), m_consensusBlockHash.end(), 0x77);
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusLeader>
     (
-        new ConsensusLeader
-        (
             consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -161,7 +160,6 @@ bool DirectoryService::RunConsensusOnShardingWhenDSPrimary()
             static_cast<unsigned char>(SHARDINGCONSENSUS),
             std::function<bool(const vector<unsigned char> &, unsigned int, const Peer &)>(),
             std::function<bool(map<unsigned int, std::vector<unsigned char>>)>()
-        )
     );
 
     if (m_consensusObject == nullptr)
@@ -290,10 +288,8 @@ bool DirectoryService::RunConsensusOnShardingWhenDSBackup()
                        vector<unsigned char> & errorMsg) mutable -> 
                        bool { return ShardingValidator(message, errorMsg); };
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusBackup>
     (
-        new ConsensusBackup
-        (
             consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -304,7 +300,6 @@ bool DirectoryService::RunConsensusOnShardingWhenDSBackup()
             static_cast<unsigned char>(DIRECTORY),
             static_cast<unsigned char>(SHARDINGCONSENSUS),
             func
-        )
     );
 
     if (m_consensusObject == nullptr)

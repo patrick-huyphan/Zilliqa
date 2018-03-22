@@ -22,6 +22,8 @@
 #include "libUtils/DataConversion.h"
 #include "libNetwork/P2PComm.h"
 
+#include <memory>
+
 using namespace std;
 
 bool ConsensusBackup::CheckState(Action action)
@@ -380,8 +382,8 @@ bool ConsensusBackup::GenerateCommitMessage(vector<unsigned char> & commit, unsi
     // Generate new commit
     // ===================
 
-    m_commitSecret.reset(new CommitSecret());
-    m_commitPoint.reset(new CommitPoint(*m_commitSecret));
+    m_commitSecret = std::make_shared<CommitSecret>();
+    m_commitPoint = std::make_shared<CommitPoint>(*m_commitSecret);
 
     // Assemble commit message body
     // ============================

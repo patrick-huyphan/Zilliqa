@@ -17,6 +17,7 @@
 #include <array>
 #include <chrono>
 #include <functional>
+#include <memory>
 #include <thread>
 
 #include <boost/multiprecision/cpp_int.hpp>
@@ -209,15 +210,12 @@ bool Node::ComposeMicroBlock()
     }
 
     LOG_MESSAGE2(to_string(m_mediator.m_currentEpochNum).c_str(), "Creating new micro block.")
-    m_microblock.reset
+    m_microblock = std::make_shared<MicroBlock>
     (
-        new MicroBlock
-        (
             MicroBlockHeader(type, version, gasLimit, gasUsed, prevHash, blockNum, timestamp, 
                              txRootHash, numTxs, minerPubKey, dsBlockNum, dsBlockHeader),
             signature,
             tranHashes
-        )
     );
 
     LOG_MESSAGE2(to_string(m_mediator.m_currentEpochNum).c_str(), "Micro block proposed with " << 
@@ -348,10 +346,8 @@ bool Node::RunConsensusOnMicroBlockWhenShardLeader()
     auto commitFailureFunc = [this](const map<unsigned int, vector<unsigned char>> & m) mutable -> 
                                     bool { return OnCommitFailure(m); };                       
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusLeader>
     (
-        new ConsensusLeader
-        (
             m_consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -362,7 +358,6 @@ bool Node::RunConsensusOnMicroBlockWhenShardLeader()
             static_cast<unsigned char>(MICROBLOCKCONSENSUS),
             nodeMissingTxnsFunc,
             commitFailureFunc
-        )
     );
 
     if (m_consensusObject == nullptr)
@@ -404,10 +399,8 @@ bool Node::RunConsensusOnMicroBlockWhenShardBackup()
     LOG_MESSAGE2(to_string(m_mediator.m_currentEpochNum).c_str(),
                  "MS: m_consensusLeaderID: " << m_consensusLeaderID);
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusBackup>
     (
-        new ConsensusBackup
-        (
             m_consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -418,7 +411,6 @@ bool Node::RunConsensusOnMicroBlockWhenShardBackup()
             static_cast<unsigned char>(NODE),
             static_cast<unsigned char>(MICROBLOCKCONSENSUS),
             func
-        )
     );
 
     if (m_consensusObject == nullptr)

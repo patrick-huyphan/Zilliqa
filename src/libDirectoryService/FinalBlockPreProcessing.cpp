@@ -15,6 +15,7 @@
 **/
 
 #include <algorithm>
+#include <memory>
 #include <thread>
 #include <chrono>
 
@@ -163,8 +164,7 @@ void DirectoryService::ComposeFinalBlockCore()
         stateRoot = AccountStore::GetInstance().GetStateRootHash();
     }
 
-    m_finalBlock.reset(
-        new TxBlock(
+    m_finalBlock = std::make_shared<TxBlock>(
             TxBlockHeader(type, version, allGasLimit,
                           allGasUsed, prevHash, blockNum, timestamp, microblockTrieRoot, stateRoot, 
                           numTxs, numMicroBlocks, m_mediator.m_selfKey.second, lastDSBlockNum, 
@@ -172,7 +172,6 @@ void DirectoryService::ComposeFinalBlockCore()
             emptySig,
             isMicroBlockEmpty,
             microBlockTxHashes
-        )
     );
 
 #ifdef STAT_TEST
@@ -423,10 +422,8 @@ bool DirectoryService::RunConsensusOnFinalBlockWhenDSPrimary()
     m_consensusBlockHash.resize(BLOCK_HASH_SIZE);
     fill(m_consensusBlockHash.begin(), m_consensusBlockHash.end(), 0x77);
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusLeader>
     (
-        new ConsensusLeader
-        (
             m_consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -437,7 +434,6 @@ bool DirectoryService::RunConsensusOnFinalBlockWhenDSPrimary()
             static_cast<unsigned char>(FINALBLOCKCONSENSUS),
             std::function<bool(const vector<unsigned char> &, unsigned int, const Peer &)>(),
             std::function<bool(map<unsigned int, std::vector<unsigned char>>)>()
-        )
     );
 
     if (m_consensusObject == nullptr)
@@ -871,7 +867,7 @@ bool DirectoryService::FinalBlockValidator(const vector<unsigned char> & finalbl
 
     unsigned int curr_offset = 0;
 
-    m_finalBlock.reset(new TxBlock(finalblock, curr_offset));
+    m_finalBlock = std::make_shared<TxBlock>(finalblock, curr_offset);
     curr_offset += m_finalBlock->GetSerializedSize();
 
     WaitForTxnBodies();
@@ -918,10 +914,8 @@ bool DirectoryService::RunConsensusOnFinalBlockWhenDSBackup()
                        vector<unsigned char> & errorMsg) mutable -> 
                        bool { return FinalBlockValidator(message, errorMsg); };
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusBackup>
         (
-            new ConsensusBackup
-                (
                         m_consensusID,
                         m_consensusBlockHash,
                         m_consensusMyID,
@@ -932,7 +926,6 @@ bool DirectoryService::RunConsensusOnFinalBlockWhenDSBackup()
                         static_cast<unsigned char>(DIRECTORY),
                         static_cast<unsigned char>(FINALBLOCKCONSENSUS),
                         func
-                )
         );
 
     if (m_consensusObject == nullptr)

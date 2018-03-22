@@ -15,6 +15,7 @@
 **/
 
 #include <algorithm>
+#include <memory>
 #include <thread>
 #include <chrono>
 
@@ -78,7 +79,7 @@ void DirectoryService::ComposeDSBlock()
     array<unsigned char, BLOCK_SIG_SIZE> newSig{};
     {
         lock_guard<mutex> g(m_mutexPendingDSBlock);
-        m_pendingDSBlock.reset(new DSBlock(newHeader, newSig));
+        m_pendingDSBlock = std::make_shared<DSBlock>(newHeader, newSig);
     }
 
     LOG_MESSAGE2(to_string(m_mediator.m_currentEpochNum).c_str(),
@@ -100,10 +101,8 @@ bool DirectoryService::RunConsensusOnDSBlockWhenDSPrimary()
     m_consensusBlockHash.resize(BLOCK_HASH_SIZE);
     fill(m_consensusBlockHash.begin(), m_consensusBlockHash.end(), 0x77);
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusLeader>
     (
-        new ConsensusLeader
-        (
             consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -114,7 +113,6 @@ bool DirectoryService::RunConsensusOnDSBlockWhenDSPrimary()
             static_cast<unsigned char>(DSBLOCKCONSENSUS),
             std::function<bool(const vector<unsigned char> &, unsigned int, const Peer &)>(),
             std::function<bool(map<unsigned int, vector<unsigned char>>)>()
-        )
     );
 
     if (m_consensusObject == nullptr)
@@ -153,7 +151,7 @@ bool DirectoryService::DSBlockValidator(const vector<unsigned char> & dsblock,
     lock_guard<mutex> g(m_mutexPendingDSBlock, adopt_lock);
     lock_guard<mutex> g2(m_mutexAllPoWConns, adopt_lock);
 
-    m_pendingDSBlock.reset(new DSBlock(dsblock, 0));
+    m_pendingDSBlock = std::make_shared<DSBlock>(dsblock, 0);
 
     if (m_allPoWConns.find(m_pendingDSBlock->GetHeader().GetMinerPubKey()) == m_allPoWConns.end())
     {
@@ -189,10 +187,8 @@ bool DirectoryService::RunConsensusOnDSBlockWhenDSBackup()
                        vector<unsigned char> & errorMsg) mutable -> 
                        bool { return DSBlockValidator(message, errorMsg); };
 
-    m_consensusObject.reset
+    m_consensusObject = std::make_shared<ConsensusBackup>
     (
-        new ConsensusBackup
-        (
             consensusID,
             m_consensusBlockHash,
             m_consensusMyID,
@@ -203,7 +199,6 @@ bool DirectoryService::RunConsensusOnDSBlockWhenDSBackup()
             static_cast<unsigned char>(DIRECTORY),
             static_cast<unsigned char>(DSBLOCKCONSENSUS),
             func
-        )
     );
 
     if (m_consensusObject == nullptr)

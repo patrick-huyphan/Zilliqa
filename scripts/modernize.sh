@@ -30,9 +30,9 @@ fi
 # $wrapper -header-filter='.*' -checks='-*,modernize-avoid-bind' $checking_dir
 # $wrapper -header-filter='.*' -checks='-*,modernize-deprecated-headers' $checking_dir
 # $wrapper -header-filter='.*' -checks='-*,modernize-loop-convert' $checking_dir
-# $wrapper -header-filter='.*' -checks='-*,modernize-make-shared' $checking_dir
+$wrapper -header-filter='.*' -checks='-*,modernize-make-shared' $checking_dir -fix
 # $wrapper -header-filter='.*' -checks='-*,modernize-make-unique' $checking_dir
-$wrapper -header-filter='.*' -checks='-*,modernize-pass-by-value' $checking_dir
+# $wrapper -header-filter='.*' -checks='-*,modernize-pass-by-value' $checking_dir
 # $wrapper -header-filter='.*' -checks='-*,modernize-raw-string-literal' $checking_dir
 # $wrapper -header-filter='.*' -checks='-*,modernize-redundant-void-arg' $checking_dir
 # $wrapper -header-filter='.*' -checks='-*,modernize-replace-auto-ptr' $checking_dir
